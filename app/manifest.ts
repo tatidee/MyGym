@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Registro de entrenamiento, comida, agua y recuperación.",
     start_url: "/",
     display: "standalone",
-    background_color: "#e6e8eb",
-    theme_color: "#e6e8eb",
+    background_color: "#f4f3ef",
+    theme_color: "#f4f3ef",
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
   };
 }

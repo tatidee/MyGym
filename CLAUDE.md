@@ -76,22 +76,34 @@ Se usa sobre todo desde el celular, instalada como PWA.
 ## Reglas al editar
 
 - **Nunca cambies el `id` de un ejercicio existente**: es la clave del historial. Para renombrar, cambiá `n`.
-- Los colores de los días son los discos olímpicos oficiales y viven en `PLAN[k].disco` + variables `--disco-*`.
+- Cada ejercicio tiene `m` (músculo principal) y cada día `corto` (abreviatura de 2 letras para la semana).
 - No subas `.env.local`. No agregues dependencias si se puede resolver con lo que hay.
 - Mantené todo en español y con voseo en la interfaz.
 - Antes de dar algo por terminado: `npm run build` tiene que pasar sin errores.
 
-## Sistema visual
+## Sistema visual ("Instrumento", rediseño de oct 2026)
 
-- Concepto: la semana es una barra olímpica (`components/Barra.tsx`); cada día entrenado carga su disco.
-  Es el único elemento protagonista: el resto se mantiene sobrio.
-- Discos: Lower 25 rojo · Legs 20 azul · Upper 15 amarillo · Pull 10 verde · Push 5 blanco.
-- Tipografías: Big Shoulders Display (títulos y números grandes) + Archivo (texto).
-- Fondo gris hormigón en claro, grafito en oscuro. Botón principal en tinta sólida (`.btn.fuerte`).
-- Todos los colores son variables en `:root` con su versión oscura en `prefers-color-scheme: dark`.
-  No uses colores sueltos en componentes.
-- Mobile first, una columna de máx. 560 px, dock de pestañas abajo con safe-area.
-- Etiquetas en minúscula normal (nada de mayúsculas sostenidas), sin emojis.
+- Concepto: una herramienta de precisión, no una app de fitness. Números enormes, cero decoración.
+- **Un color significa una cosa**: naranja `--acc` = la próxima acción (un solo botón naranja por pantalla),
+  verde `--ok` = progresión lograda / meta, ámbar `--warn` = hombro y precaución. Nada más tiene color.
+- Tipografía: Archivo de ancho variable (condensada 72-78% para números y títulos, 125% para la marca)
+  + IBM Plex Mono para datos y etiquetas chicas en mayúscula (`.dato`). Sin emojis.
+- Tokens en `:root` de `app/globals.css` (colores, espaciado `--s*`, radios `--r*`, sombras `--sh*`, movimiento `--t-*`)
+  con su versión oscura en `prefers-color-scheme: dark`. No uses colores sueltos en componentes.
+- La semana son 7 columnas (`components/Semana.tsx`): 5 altas de entreno y 2 bajas de descanso.
+  Llena = hecho, se llena en proporción a las series; contorno naranja = día elegido. Deslizar cambia de semana.
+- Mobile first, una columna de máx. 560 px, objetivos táctiles ≥ 44 px, barra de pestañas abajo con safe-area.
+
+## Pantallas
+
+- **Hoy** (`Hoy.tsx`): semana, "hoy toca", y hábitos que se guardan solos (agua, comidas, Bristol, hombro, peso, cintura, nota).
+  Tocar un día de la semana permite registrar fechas pasadas. El avatar abre el Informe.
+- **Entreno** (`Entreno.tsx`): modo foco, un ejercicio por vez. La serie viene precargada (`lib/entreno.ts`: la anterior,
+  o la última sesión + suba si llegó al tope) y se registra con un toque; cada serie se guarda al instante y arranca el descanso.
+  La sesión en curso vive en `localStorage` y muestra una píldora sobre la barra desde las otras pestañas.
+- **Progreso** (`Progreso.tsx`): peso, cintura, cargas, hombro y constancia como tendencias. De acá sale el Informe.
+- **Plan** (`Plan.tsx`): comidas, rutina y compras, todo leído de `lib/plan.ts`.
+- **Informe** (`Informe.tsx`): hoja que sube desde abajo, con el texto para copiar y cerrar sesión.
 
 ## Comandos
 

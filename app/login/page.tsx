@@ -3,7 +3,6 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import Barra from "@/components/Barra";
 
 function Formulario() {
   const supabase = useMemo(() => createClient(), []);
@@ -13,6 +12,7 @@ function Formulario() {
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [ver, setVer] = useState(false);
   const [msg, setMsg] = useState<string | null>(
     params.get("error") === "confirmacion" ? "El link de confirmación venció o ya se usó. Entrá con tu mail y contraseña." : null,
   );
@@ -59,36 +59,47 @@ function Formulario() {
   }
 
   return (
-    <main className="wrap login">
-      <div className="heroe">
-        <h1 className="titulo">MyGym</h1>
-        <Barra cargados={["lower", "legs", "upper", "pull", "push"]} />
-        <p className="lede">Tus cargas, tu comida, tu agua y tu hombro. Todo en un lugar, solo para vos.</p>
+    <main className="login">
+      <p className="marca">MyGym</p>
+      <div className="login-hola">
+        <h1>{modo === "entrar" ? <>Hola de<br />nuevo.</> : <>Creá tu<br />cuenta.</>}</h1>
+        <p>{modo === "entrar" ? "Entrá para seguir donde lo dejaste." : "Una sola vez. Después, solo entrás."}</p>
       </div>
-      <form className="panel" onSubmit={enviar}>
-        <h2 className="subtitulo">{modo === "entrar" ? "Entrar" : "Crear cuenta"}</h2>
-        <label className="campo">
-          <span className="etiqueta">Mail</span>
-          <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label className="campo">
-          <span className="etiqueta">Contraseña</span>
-          <input
-            id="clave"
-            type="password"
-            autoComplete={modo === "entrar" ? "current-password" : "new-password"}
-            required
-            value={clave}
-            onChange={(e) => setClave(e.target.value)}
-          />
-        </label>
-        {msg && <p className="error" role="alert">{msg}</p>}
-        <button className="btn fuerte" disabled={enviando}>
-          {enviando ? "Un momento…" : modo === "entrar" ? "Entrar" : "Crear cuenta"}
-        </button>
-        <button type="button" className="btn suelto chico" onClick={() => { setModo(modo === "entrar" ? "crear" : "entrar"); setMsg(null); }}>
-          {modo === "entrar" ? "Es mi primera vez: crear cuenta" : "Ya tengo cuenta: entrar"}
-        </button>
+      <form onSubmit={enviar}>
+        <div className="campos">
+          <div className="campo">
+            <label htmlFor="email" className="dato">Mail</label>
+            <div className="campo-caja">
+              <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+          </div>
+          <div className="campo">
+            <label htmlFor="clave" className="dato">Contraseña</label>
+            <div className="campo-caja">
+              <input
+                id="clave"
+                type={ver ? "text" : "password"}
+                autoComplete={modo === "entrar" ? "current-password" : "new-password"}
+                required
+                value={clave}
+                onChange={(e) => setClave(e.target.value)}
+              />
+              <button type="button" onClick={() => setVer(!ver)} aria-pressed={ver}>
+                {ver ? "Ocultar" : "Mostrar"}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="login-pie">
+          {msg && <p className="error-txt" role="alert">{msg}</p>}
+          <button className="btn acc" disabled={enviando}>
+            <span>{enviando ? "Un momento…" : modo === "entrar" ? "Entrar" : "Crear cuenta"}</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          <button type="button" className="link" onClick={() => { setModo(modo === "entrar" ? "crear" : "entrar"); setMsg(null); }}>
+            {modo === "entrar" ? "Es mi primera vez: crear cuenta" : "Ya tengo cuenta: entrar"}
+          </button>
+        </div>
       </form>
     </main>
   );

@@ -35,6 +35,7 @@ export function useGymData() {
   const [sesiones, setSesiones] = useState<Record<string, Sesion>>({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [guardadoEn, setGuardadoEn] = useState<Date | null>(null);
   const diasRef = useRef(dias);
   diasRef.current = dias;
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -78,6 +79,7 @@ export function useGymData() {
         .from("dias")
         .upsert({ ...dia, user_id: userId, updated_at: new Date().toISOString() }, { onConflict: "user_id,fecha" });
       if (e) setError("No se guardó el último cambio del día. Probá de nuevo.");
+      else setGuardadoEn(new Date());
     },
     [supabase, userId],
   );
@@ -107,6 +109,7 @@ export function useGymData() {
         setError("No se guardó la serie. Probá de nuevo.");
         return false;
       }
+      setGuardadoEn(new Date());
       return true;
     },
     [supabase, userId],
@@ -121,6 +124,7 @@ export function useGymData() {
       });
       const { error: e } = await supabase.from("sesiones").delete().eq("fecha", fecha).eq("ejercicio", ejercicio);
       if (e) setError("No se pudo borrar. Probá de nuevo.");
+      else setGuardadoEn(new Date());
     },
     [supabase],
   );
@@ -130,7 +134,7 @@ export function useGymData() {
     window.location.href = "/login";
   }, [supabase]);
 
-  return { dias, sesiones, cargando, error, setError, email, guardarDia, guardarSesion, borrarSesion, salir };
+  return { dias, sesiones, cargando, error, setError, guardadoEn, email, guardarDia, guardarSesion, borrarSesion, salir };
 }
 
 export type GymData = ReturnType<typeof useGymData>;

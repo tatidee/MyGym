@@ -3,8 +3,8 @@
 Registro personal de entrenamiento, comida, agua, baño, peso y dolor de hombro.
 Next.js 15 + Supabase (login y base de datos) + Vercel.
 
-La semana se muestra como una barra olímpica: cada día entrenado carga su disco de competencia
-(Lower 25 rojo, Legs 20 azul, Upper 15 amarillo, Pull 10 verde, Push 5 blanco).
+Cuatro pestañas por momento del día: **Hoy** (hábitos en casa), **Entreno** (modo foco en el gimnasio),
+**Progreso** (tendencias e informe para Claude) y **Plan** (comidas, rutina y compras).
 
 ## 1. Base de datos (una sola vez)
 
@@ -76,13 +76,14 @@ app/
   page.tsx              → la app (protegida por login)
   login/page.tsx        → entrar / crear cuenta
   auth/callback/        → destino del mail de confirmación
-  globals.css           → todo el diseño (colores, tipografía, componentes)
+  globals.css           → todo el diseño (tokens, componentes, claro y oscuro)
 components/
-  GymApp.tsx            → encabezado, pestañas y dock
-  Barra.tsx             → la barra olímpica de la semana
-  Hoy.tsx · Rutina.tsx · Comidas.tsx · Registro.tsx · Informe.tsx
+  GymApp.tsx            → pestañas, píldora de sesión en curso y avisos
+  Semana.tsx            → la semana en 7 columnas
+  Hoy.tsx · Entreno.tsx · Progreso.tsx · Plan.tsx · Informe.tsx
 lib/
   plan.ts               → EL PLAN (lo que vas a editar más seguido)
+  entreno.ts            → precarga de series, incrementos y descansos
   useGymData.ts         → lectura y guardado en Supabase
   informe.ts            → el texto que le pasás a Claude
 supabase/schema.sql     → tablas y permisos

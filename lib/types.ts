@@ -25,6 +25,7 @@ export type Dia = {
 export type Ejercicio = {
   id: string;
   n: string;
+  m: string; // músculo principal
   s: number;
   r: [number, number];
   rir: string;
@@ -36,8 +37,8 @@ export type Ejercicio = {
 export type DiaPlan = {
   key: DiaKey;
   n: string;
+  corto: string; // abreviatura de 2 letras para la semana
   semana: number; // 1 = lunes … 5 = viernes
   calentarHombro?: boolean;
-  disco: { kg: number; color: string; tinta: string };
   ej: Ejercicio[];
 };
