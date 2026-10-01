@@ -104,7 +104,8 @@ function Sesion({
   const avisoHombro = hombro != null && hombro > 3;
 
   return (
-    <>
+    <div className="ent-grid">
+      <div>
       <div className="ent-cabeza">
         <button className="redondo" onClick={volver} aria-label="Volver a Hoy">←</button>
         <button className="centro" onClick={() => setElegir(!elegir)} aria-expanded={elegir} aria-label={`${plan.n}. Cambiar de día`}>
@@ -195,6 +196,9 @@ function Sesion({
         </div>
       )}
 
+      </div>
+
+      <div className="col-fija">
       <div className="bloque dato">Ejercicios</div>
       <div className="lista-ej">
         {plan.ej.map((e, i) =>
@@ -216,7 +220,8 @@ function Sesion({
           Hombro: si una serie duele más de 3/10, o sigue al día siguiente, bajá peso o rango.
         </div>
       )}
-    </>
+      </div>
+    </div>
   );
 }
 

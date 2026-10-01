@@ -27,13 +27,13 @@ export default function Progreso({ data, abrirInforme }: { data: GymData; abrirI
         </div>
       </div>
 
-      <div className="pila" style={{ marginTop: 18 }}>
+      <div className="pila grilla" style={{ marginTop: 18 }}>
         <Peso dias={dias} desde={desde} hoy={hoy} rango={rango} />
         <Cintura dias={dias} />
         <Cargas sesiones={data.sesiones} />
         <Hombro dias={data.dias} hoy={hoy} />
         <Constancia data={data} hoy={hoy} />
-        <button className="btn tinta" onClick={abrirInforme}>
+        <button className="btn tinta ancho" onClick={abrirInforme}>
           <span>Generar informe para la IA</span>
           <span aria-hidden="true">↗</span>
         </button>

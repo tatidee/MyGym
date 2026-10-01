@@ -140,6 +140,7 @@ export default function GymApp() {
 
       <nav className="nav" aria-label="Secciones">
         <div className="nav-in">
+          <span className="nav-marca marca" aria-hidden="true">MyGym</span>
           {TABS.map((t) => (
             <button key={t.id} aria-current={tab === t.id ? "page" : undefined} onClick={() => ir(t.id)}>
               {t.n}

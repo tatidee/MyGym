@@ -18,7 +18,7 @@ export default function Plan() {
         <button aria-pressed={vista === "rutina"} onClick={() => setVista("rutina")}>Rutina</button>
         <button aria-pressed={vista === "compras"} onClick={() => setVista("compras")}>Compras</button>
       </div>
-      <div className="pila" style={{ marginTop: 16 }}>
+      <div className="pila columnas" style={{ marginTop: 16 }}>
         {vista === "comidas" ? <Comidas /> : vista === "rutina" ? <Rutina /> : <Compras />}
       </div>
       <p className="guardado dato">Plan {PLAN_VERSION}</p>

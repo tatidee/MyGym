@@ -25,7 +25,8 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
   const esHoy = fecha === hoyISO();
 
   return (
-    <>
+    <div className="hoy-grid">
+      <div className="col-fija">
       <div className="cabeza">
         <span className="dato">
           {fechaCorta(fecha)} · semana {semanaISO(fecha)}
@@ -38,7 +39,9 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
       <Semana fecha={fecha} sesiones={data.sesiones} onElegir={setFecha} />
 
       <Toca data={data} fecha={fecha} empezar={empezar} />
+      </div>
 
+      <div>
       <div className="bloque dato">Hábitos · se guardan solos</div>
 
       <div className="pila">
@@ -87,7 +90,8 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
             ? "Todo se guarda al tocar"
             : `Registrando el ${NOM_SEMANA[parseISO(fecha).getDay()].toLowerCase()} ${ddmm(fecha)}`}
       </div>
-    </>
+      </div>
+    </div>
   );
 }
 

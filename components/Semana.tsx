@@ -87,13 +87,13 @@ export default function Semana({ fecha, sesiones, onElegir }: Props) {
       </div>
       <div className="semana-pie">
         <span>{hechos} de 5 hechos</span>
-        {fecha !== hoy ? (
-          <button className="link" style={{ minHeight: 0, padding: 0, color: "var(--acc)" }} onClick={() => onElegir(hoy)}>
-            Volver a hoy
-          </button>
-        ) : (
-          <span>Deslizá para otra semana</span>
-        )}
+        <span className="semana-nav">
+          {fecha !== hoy ? (
+            <button className="acc-t" onClick={() => onElegir(hoy)}>Volver a hoy</button>
+          ) : null}
+          <button onClick={() => mover(-1)} aria-label="Semana anterior">‹</button>
+          <button onClick={() => mover(1)} disabled={lunesDe(fecha) === lunesDe(hoy)} aria-label="Semana siguiente">›</button>
+        </span>
       </div>
     </>
   );
