@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ddmm, fmt, num, reloj } from "@/lib/fechas";
 import { setsTxt, tocoTope } from "@/lib/informe";
-import { CALENTAMIENTO_HOMBRO, ORDEN, PLAN } from "@/lib/plan";
+import { CALENTAMIENTO_HOMBRO, ORDEN, PLAN, RUTINA_ESPECIAL, type RutinaEspecial } from "@/lib/plan";
 import { descansoDe, pasoKg, pasoReps, subaKg, sugerencia } from "@/lib/entreno";
 import type { DiaKey, Ejercicio, SetLog } from "@/lib/types";
 import { claveSesion, diaVacio, ultimaAntes, type GymData } from "@/lib/useGymData";
@@ -41,6 +41,23 @@ function useAhora(activo: boolean) {
 export default function Entreno(props: Props) {
   const { data, fecha, dia, setDia, activa } = props;
   const [elegir, setElegir] = useState(false);
+  const [verSplit, setVerSplit] = useState(false);
+
+  // TEMPORAL: borrar después del 02/10/2026
+  const esp = RUTINA_ESPECIAL[fecha];
+  if (esp && !verSplit) {
+    return (
+      <Activacion
+        esp={esp}
+        fecha={fecha}
+        volver={props.volver}
+        elegirSplit={(k) => {
+          setDia(k);
+          setVerSplit(true);
+        }}
+      />
+    );
+  }
 
   if (!dia) {
     return (
@@ -222,6 +239,96 @@ function Sesion({
       )}
       </div>
     </div>
+  );
+}
+
+/**
+ * TEMPORAL: borrar después del 02/10/2026.
+ * Rutina especial como checklist: lo tildado vive en el celular (localStorage), no en Supabase,
+ * así no entra al historial de cargas ni al informe.
+ */
+function Activacion({ esp, fecha, volver, elegirSplit }: { esp: RutinaEspecial; fecha: string; volver: () => void; elegirSplit: (k: DiaKey) => void }) {
+  const k = `mygym-activacion-${fecha}`;
+  const [hecho, setHecho] = useState<boolean[]>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(k) ?? "null");
+      if (Array.isArray(v) && v.length === esp.ej.length) return v;
+    } catch {}
+    return esp.ej.map(() => false);
+  });
+  const [elegir, setElegir] = useState(false);
+  const listos = hecho.filter(Boolean).length;
+
+  const tildar = (i: number) => {
+    const v = hecho.map((x, j) => (j === i ? !x : x));
+    setHecho(v);
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+    } catch {}
+  };
+
+  return (
+    <>
+      <div className="ent-cabeza">
+        <button className="redondo" onClick={volver} aria-label="Volver a Hoy">←</button>
+        <button className="centro" onClick={() => setElegir(!elegir)} aria-expanded={elegir} aria-label={`${esp.n}. Cambiar a un día del split`}>
+          <b>{esp.n} ▾</b>
+          <span className="mono">{ddmm(fecha)} · {listos} de {esp.ej.length}</span>
+        </button>
+        <span style={{ width: 48 }} />
+      </div>
+
+      {elegir && (
+        <>
+          <p className="sec" style={{ fontSize: 13, margin: "12px 8px 0" }}>Hacer un día del split en vez de la activación:</p>
+          <div className="dias-elegir">
+            {ORDEN.map((d) => (
+              <button key={d} onClick={() => elegirSplit(d)}>{PLAN[d].n}</button>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="progreso-ej" aria-hidden="true">
+        {esp.ej.map((e, i) => (
+          <span key={e.n} className={hecho[i] ? "hecho" : ""} style={{ height: 20, display: "flex", alignItems: "center" }}>
+            <i />
+          </span>
+        ))}
+      </div>
+
+      {esp.calentarHombro && <Calentamiento clave={`${fecha}-especial`} />}
+
+      <section className="card fuerte ej" aria-label={esp.n}>
+        <div className="ej-cab">
+          <div className="dato">Cuerpo completo · {esp.ej.length} ejercicios</div>
+          <h2 className="ej-nombre">{esp.n}</h2>
+          <div className="receta">
+            <span>{esp.ej[0].s} × {esp.ej[0].r[0]}–{esp.ej[0].r[1]}</span>
+            <span>RIR {esp.ej[0].rir}</span>
+          </div>
+          <p className="ej-nota">{esp.nota}</p>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          {esp.ej.map((e, i) => (
+            <button key={e.n} className="check" aria-pressed={hecho[i]} onClick={() => tildar(i)}>
+              <span className="caja" aria-hidden="true">{hecho[i] ? "✓" : ""}</span>
+              <span className="txt">{e.n}</span>
+              <span className="mono">{e.s} × {e.r[0]}–{e.r[1]}</span>
+            </button>
+          ))}
+        </div>
+        {listos === esp.ej.length && (
+          <div className="completo tope">
+            <span>Listo. Ahora, {esp.caminata}.</span>
+          </div>
+        )}
+      </section>
+
+      <div className="aviso" style={{ marginTop: 10 }}>
+        No guarda series: es para volver a moverte. Los datos reales arrancan el lunes 05/10.
+      </div>
+    </>
   );
 }
 

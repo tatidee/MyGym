@@ -5,7 +5,7 @@ import type { DiaKey, DiaPlan } from "./types";
  * Los ids de ejercicio (`id`) se usan para guardar el historial: si renombrás
  * un ejercicio cambiá solo `n`, así no perdés sus cargas anteriores.
  */
-export const PLAN_VERSION = "v2 · octubre 2026 · lunes a viernes";
+export const PLAN_VERSION = "v3 · octubre 2026 · lunes a viernes";
 
 export const PLAN: Record<DiaKey, DiaPlan> = {
   upper: {
@@ -88,10 +88,11 @@ export const CALENTAMIENTO_HOMBRO: { n: string; dosis: string; nota?: string }[]
 
 export const NOM_SEMANA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-export type Comida = { id: string; n: string; kcal: number; p: number; items: string[] };
+/** `liquido`: al tildar la comida se suma solo al agua del día, con esa fuente. */
+export type Comida = { id: string; n: string; kcal: number; p: number; items: string[]; liquido?: { ml: number; nombre: string } };
 
 export const COMIDAS: Comida[] = [
-  { id: "desayuno", n: "Desayuno", kcal: 575, p: 31, items: ["60 g de avena", "300 ml de leche descremada", "1 banana", "2 huevos revueltos"] },
+  { id: "desayuno", n: "Desayuno", kcal: 575, p: 31, items: ["60 g de avena", "300 ml de leche descremada", "1 banana", "2 huevos revueltos"], liquido: { ml: 300, nombre: "Leche del desayuno" } },
   { id: "almuerzo", n: "Almuerzo", kcal: 585, p: 52, items: ["200 g de pechuga de pollo (peso crudo)", "60 g de arroz (crudo)", "Ensalada libre", "10 ml de aceite"] },
   { id: "merienda", n: "Merienda", kcal: 355, p: 27, items: ["200 g de ricota descremada", "1 rebanada de pan integral", "1 manzana"] },
   { id: "cena", n: "Cena: boloñesa mixta", kcal: 720, p: 69, items: ["60 g de soja texturizada (seca)", "150 g de carne picada magra", "50 g de fideos (crudos)", "Salsa de tomate con verduras", "10 ml de aceite"] },
@@ -111,7 +112,44 @@ export const COMPRAS = [
 
 export const MACROS = { kcal: 2200, p: 180, c: 235, g: 60 };
 export const AGUA_META = 3000; // ml
+export const TERMO_MATE_ML = 1000; // lo que suma "+ termo de mate"
+export const DIA_CINTURA = 5; // la cintura se mide los viernes (0 = domingo)
 export const CINTURA_META = 88; // cm: relación cintura/altura 0,50 con 1,76 m
 export const ALTURA_CM = 176;
 
 export const BRISTOL = ["", "Bolitas duras", "Grumosa", "Agrietada", "Lisa y blanda", "Trozos blandos", "Pastosa", "Líquida"];
+
+// TEMPORAL: borrar después del 02/10/2026 (y sus usos en Hoy, Semana y Entreno: buscá RUTINA_ESPECIAL).
+/**
+ * Días sueltos que no siguen el split. Ganan sobre POR_DIA en Hoy, Semana y Entreno.
+ * Son una checklist: no guardan series en Supabase, así no ensucian el historial ni el informe.
+ */
+export type RutinaEspecial = {
+  n: string;
+  corto: string;
+  calentarHombro: boolean;
+  caminata: string;
+  nota: string;
+  ej: { n: string; s: number; r: [number, number]; rir: string }[];
+};
+
+const ACTIVACION: RutinaEspecial = {
+  n: "Activación",
+  corto: "AC",
+  calentarHombro: true,
+  caminata: "30-40 min de caminata",
+  nota: "Encontrá pesos y escuchá al hombro, no es para matarte.",
+  ej: [
+    "Press inclinado 30° con mancuernas, agarre neutro",
+    "Jalón al pecho, agarre neutro",
+    "Hack squat o prensa",
+    "Peso muerto rumano liviano",
+    "Vuelos laterales livianos, hasta la altura del hombro",
+    "Rotación externa en polea",
+  ].map((n) => ({ n, s: 2, r: [10, 12], rir: "3-4" })),
+};
+
+export const RUTINA_ESPECIAL: Record<string, RutinaEspecial> = {
+  "2026-10-01": ACTIVACION,
+  "2026-10-02": ACTIVACION,
+};

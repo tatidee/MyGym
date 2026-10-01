@@ -11,9 +11,13 @@ export type Sesion = {
 
 export type Bano = { h: string; t: number };
 
+/** Una toma de líquido. `auto` = id de la comida que la generó (se borra al destildarla). */
+export type AguaToma = { ml: number; fuente: string; h: string; auto?: string };
+
 export type Dia = {
   fecha: string;
-  agua: number;
+  agua: number; // siempre la suma de agua_log
+  agua_log: AguaToma[];
   banos: Bano[];
   peso: number | null;
   cintura: number | null;

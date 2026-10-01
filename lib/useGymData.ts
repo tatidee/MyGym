@@ -2,20 +2,27 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import type { Dia, DiaKey, Sesion, SetLog } from "./types";
+import type { AguaToma, Dia, DiaKey, Sesion, SetLog } from "./types";
 
 export const diaVacio = (fecha: string): Dia => ({
-  fecha, agua: 0, banos: [], peso: null, cintura: null, hombro: null, nota: "", comidas: {},
+  fecha, agua: 0, agua_log: [], banos: [], peso: null, cintura: null, hombro: null, nota: "", comidas: {},
 });
 
 const toNum = (v: unknown) => (v == null || v === "" ? null : Number(v));
 
 type FilaDia = Partial<Dia> & { fecha: string };
 
+export const sumaAgua = (log: AguaToma[]) => log.reduce((a, t) => a + t.ml, 0);
+
 function normalizarDia(r: FilaDia): Dia {
+  const agua = Number(r.agua ?? 0);
+  let log: AguaToma[] = Array.isArray(r.agua_log) ? r.agua_log : [];
+  // Días cargados antes de agua_log: una sola toma con todo, así la suma coincide.
+  if (!log.length && agua > 0) log = [{ ml: agua, fuente: "Agua", h: "—" }];
   return {
     fecha: r.fecha,
-    agua: Number(r.agua ?? 0),
+    agua: sumaAgua(log),
+    agua_log: log,
     banos: Array.isArray(r.banos) ? r.banos : [],
     peso: toNum(r.peso),
     cintura: toNum(r.cintura),
@@ -88,6 +95,7 @@ export function useGymData() {
   const guardarDia = useCallback(
     (fecha: string, cambios: Partial<Dia>, demorar = false) => {
       const nuevo: Dia = { ...(diasRef.current[fecha] ?? diaVacio(fecha)), ...cambios, fecha };
+      nuevo.agua = sumaAgua(nuevo.agua_log); // `agua` nunca se escribe suelto
       setDias((prev) => ({ ...prev, [fecha]: nuevo }));
       diasRef.current = { ...diasRef.current, [fecha]: nuevo };
       clearTimeout(timers.current[fecha]);

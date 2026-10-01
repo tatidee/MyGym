@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Semana from "./Semana";
 import { addDays, ddmm, fechaCorta, fmt, horaAhora, hoyISO, miles, num, parseISO, semanaISO } from "@/lib/fechas";
-import { AGUA_META, ALTURA_CM, BRISTOL, COMIDAS, NOM_SEMANA, PLAN, POR_DIA } from "@/lib/plan";
+import {
+  AGUA_META, ALTURA_CM, BRISTOL, COMIDAS, DIA_CINTURA, NOM_SEMANA, PLAN, POR_DIA, RUTINA_ESPECIAL, TERMO_MATE_ML, type Comida,
+} from "@/lib/plan";
 import { minutosDe, seriesDe } from "@/lib/entreno";
-import type { DiaKey } from "@/lib/types";
+import type { AguaToma, DiaKey } from "@/lib/types";
 import { claveSesion, diaVacio, type GymData } from "@/lib/useGymData";
 
 type Props = {
@@ -13,7 +15,7 @@ type Props = {
   fecha: string;
   setFecha: (f: string) => void;
   avisar: (m: string) => void;
-  empezar: (k: DiaKey) => void;
+  empezar: (k?: DiaKey) => void;
   abrirInforme: () => void;
 };
 
@@ -23,6 +25,30 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
   const d = data.dias[fecha] ?? diaVacio(fecha);
   const guardar = data.guardarDia;
   const esHoy = fecha === hoyISO();
+  const hora = () => (esHoy ? horaAhora() : "—");
+
+  /* ---- agua: cada toma con su fuente; `agua` se recalcula sola en guardarDia ---- */
+  const sumarToma = (ml: number, fuente: string) =>
+    guardar(fecha, { agua_log: [...d.agua_log, { ml, fuente, h: hora() }] }, true);
+  const restar = (ml: number) => {
+    // descuenta de la última toma manual (las automáticas se sacan destildando la comida)
+    let i = d.agua_log.length - 1;
+    while (i >= 0 && d.agua_log[i].auto) i--;
+    if (i < 0) return;
+    const t = d.agua_log[i];
+    const log = t.ml > ml ? d.agua_log.map((x, j) => (j === i ? { ...x, ml: x.ml - ml } : x)) : d.agua_log.filter((_, j) => j !== i);
+    guardar(fecha, { agua_log: log }, true);
+  };
+  const borrarToma = (i: number) => guardar(fecha, { agua_log: d.agua_log.filter((_, j) => j !== i) });
+
+  const tildarComida = (c: Comida) => {
+    const on = !d.comidas[c.id];
+    let log = d.agua_log.filter((t) => t.auto !== c.id);
+    if (on && c.liquido) log = [...log, { ml: c.liquido.ml, fuente: c.liquido.nombre, h: hora(), auto: c.id }];
+    guardar(fecha, { comidas: { ...d.comidas, [c.id]: on }, agua_log: log });
+  };
+
+  const viernes = parseISO(fecha).getDay() === DIA_CINTURA;
 
   return (
     <div className="hoy-grid">
@@ -36,6 +62,18 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
         </button>
       </div>
 
+      {viernes &&
+        (d.cintura == null ? (
+          <div className="aviso" role="note" style={{ margin: "14px 0 4px" }}>
+            <b>Hoy toca medir cintura:</b> en ayunas, después de orinar, cinta horizontal en el ombligo, al final de una
+            exhalación normal sin meter panza.
+          </div>
+        ) : (
+          <div className="aviso ok" style={{ margin: "14px 0 4px" }}>
+            Cintura medida: {fmt(d.cintura)} cm. La próxima, el viernes que viene.
+          </div>
+        ))}
+
       <Semana fecha={fecha} sesiones={data.sesiones} onElegir={setFecha} />
 
       <Toca data={data} fecha={fecha} empezar={empezar} />
@@ -45,7 +83,7 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
       <div className="bloque dato">Hábitos · se guardan solos</div>
 
       <div className="pila">
-        <Agua agua={d.agua} onCambiar={(ml) => guardar(fecha, { agua: Math.max(0, d.agua + ml) }, true)} />
+        <Agua agua={d.agua} log={d.agua_log} onSumar={sumarToma} onRestar={restar} onBorrar={borrarToma} />
 
         <section className="card lista" aria-label="Comidas">
           <div className="entre" style={{ paddingBottom: 8 }}>
@@ -58,9 +96,12 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
           {COMIDAS.map((c) => {
             const on = !!d.comidas[c.id];
             return (
-              <button key={c.id} className="check" aria-pressed={on} onClick={() => guardar(fecha, { comidas: { ...d.comidas, [c.id]: !on } })}>
+              <button key={c.id} className="check" aria-pressed={on} onClick={() => tildarComida(c)}>
                 <span className="caja" aria-hidden="true">{on ? "✓" : ""}</span>
-                <span className="txt">{c.n}</span>
+                <span className="txt">
+                  {c.n}
+                  {c.liquido && <small>suma {c.liquido.ml} ml al agua</small>}
+                </span>
                 <span className="mono">{c.kcal} · {c.p} g P</span>
               </button>
             );
@@ -95,10 +136,31 @@ export default function Hoy({ data, fecha, setFecha, avisar, empezar, abrirInfor
   );
 }
 
-function Toca({ data, fecha, empezar }: { data: GymData; fecha: string; empezar: (k: DiaKey) => void }) {
+function Toca({ data, fecha, empezar }: { data: GymData; fecha: string; empezar: (k?: DiaKey) => void }) {
   const wd = parseISO(fecha).getDay();
   const k = POR_DIA[wd];
   const cuando = fecha === hoyISO() ? "Hoy" : `El ${NOM_SEMANA[wd].toLowerCase()}`;
+
+  // TEMPORAL: borrar después del 02/10/2026
+  const esp = RUTINA_ESPECIAL[fecha];
+  if (esp) {
+    const series = esp.ej.reduce((a, e) => a + e.s, 0);
+    return (
+      <section className="card toca">
+        <div className="dato acc-t">{fecha === hoyISO() ? "Hoy toca" : `${cuando} tocaba`}</div>
+        <h1 className="display" style={{ fontSize: 72 }}>{esp.n}</h1>
+        <p>
+          {esp.ej.length} ejercicios · {series} series · cuerpo completo, liviano
+          <br />
+          {esp.calentarHombro ? "Antes, hombro (5 min). " : ""}Después, {esp.caminata}.
+        </p>
+        <button className="btn acc" onClick={() => empezar()}>
+          <span>Empezar {esp.n}</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </section>
+    );
+  }
 
   if (!k) {
     return (
@@ -134,7 +196,16 @@ function Toca({ data, fecha, empezar }: { data: GymData; fecha: string; empezar:
   );
 }
 
-function Agua({ agua, onCambiar }: { agua: number; onCambiar: (ml: number) => void }) {
+type AguaProps = {
+  agua: number;
+  log: AguaToma[];
+  onSumar: (ml: number, fuente: string) => void;
+  onRestar: (ml: number) => void;
+  onBorrar: (i: number) => void;
+};
+
+function Agua({ agua, log, onSumar, onRestar, onBorrar }: AguaProps) {
+  const hayManual = log.some((t) => !t.auto);
   const vasos = Math.floor(agua / VASO);
   const meta = agua >= AGUA_META;
   return (
@@ -160,10 +231,31 @@ function Agua({ agua, onCambiar }: { agua: number; onCambiar: (ml: number) => vo
         ))}
       </div>
       <div className="agua-btns">
-        <button className="menos" onClick={() => onCambiar(-VASO)} disabled={agua <= 0} aria-label="Restar 250 ml">−</button>
-        <button className="mas" onClick={() => onCambiar(VASO)}>+250 ml</button>
-        <button className="mas2" onClick={() => onCambiar(2 * VASO)}>+500 ml</button>
+        <button className="mas" onClick={() => onSumar(VASO, "Agua")}>+250 agua</button>
+        <button className="mas2" onClick={() => onSumar(2 * VASO, "Agua")}>+500 agua</button>
+        <button className="mas2" onClick={() => onSumar(3 * VASO, "Agua")}>+750 agua</button>
+        <button className="menos" onClick={() => onRestar(VASO)} disabled={!hayManual} aria-label="Restar 250 ml de la última toma">−250</button>
+        <button className="mas2 mate" onClick={() => onSumar(TERMO_MATE_ML, "Mate")}>+ termo de mate</button>
       </div>
+      {log.length > 0 && (
+        <ul className="tomas" aria-label="Tomas del día">
+          {log.map((t, i) => (
+            <li key={i} className={t.auto ? "auto" : ""}>
+              <span className="mono">{t.h}</span>
+              <span className="ml">{miles(t.ml)} ml</span>
+              <span className="f">
+                {t.fuente}
+                {t.auto && " · automático"}
+              </span>
+              {t.auto ? (
+                <span />
+              ) : (
+                <button onClick={() => onBorrar(i)} aria-label={`Borrar ${t.ml} ml de ${t.fuente.toLowerCase()} de las ${t.h}`}>×</button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -274,8 +366,13 @@ function Medidas({ data, fecha, avisar }: { data: GymData; fecha: string; avisar
     data.guardarDia(fecha, { cintura: c });
   }
 
+  const wd = parseISO(fecha).getDay();
+  const conCintura = wd === DIA_CINTURA || d.cintura != null;
+  const proxima = addDays(fecha, (DIA_CINTURA - wd + 7) % 7 || 7);
+
   return (
-    <div className="dos">
+    <div>
+    <div className={conCintura ? "dos" : ""}>
       <div className="card medida">
         <label htmlFor="peso">Peso en ayunas</label>
         <input
@@ -292,6 +389,7 @@ function Medidas({ data, fecha, avisar }: { data: GymData; fecha: string; avisar
           {dif != null ? `${dif > 0 ? "+" : dif < 0 ? "−" : "±"}${fmt(Math.abs(dif))} vs. ${previo.fecha === addDays(fecha, -1) ? "ayer" : ddmm(previo.fecha)}` : "kg"}
         </div>
       </div>
+      {conCintura && (
       <div className={`card medida ${d.cintura == null ? "hueca" : ""}`}>
         <label htmlFor="cintura">Cintura (ombligo)</label>
         <input
@@ -305,9 +403,16 @@ function Medidas({ data, fecha, avisar }: { data: GymData; fecha: string; avisar
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
         />
         <div className="mono">
-          {d.cintura != null ? `cm · ratio ${fmt(d.cintura / ALTURA_CM, 2)}` : "1 vez por semana"}
+          {d.cintura != null ? `cm · ratio ${fmt(d.cintura / ALTURA_CM, 2)}` : "cm · en ayunas"}
         </div>
       </div>
+      )}
+    </div>
+      {!conCintura && (
+        <p className="mono" style={{ margin: "8px 8px 0" }}>
+          Próxima medición de cintura: {NOM_SEMANA[DIA_CINTURA].toLowerCase()} {ddmm(proxima)}
+        </p>
+      )}
     </div>
   );
 }

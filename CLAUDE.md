@@ -46,6 +46,13 @@ Se usa sobre todo desde el celular, instalada como PWA.
 - Ajuste de calorías: mirar el promedio semanal de peso y la cintura. Meta: −0,3 a −0,5 kg por semana.
   Si en 2-3 semanas no se mueve, bajar 150-200 kcal de carbos o grasa (nunca de proteína).
 - Metas de cintura: primer hito < 95 cm, meta de salud ≤ 88 cm (relación 0,50).
+- Cintura: se mide **solo los viernes** (`DIA_CINTURA = 5`): en ayunas, después de orinar, cinta horizontal en el
+  ombligo, al final de una exhalación normal. Hoy muestra el campo y el aviso solo ese día (o si ese día ya tiene medida).
+- Agua: meta 3 L contando todos los líquidos. El termo de mate suma `TERMO_MATE_ML` (1000 ml) y la leche del
+  desayuno se suma sola al tildar la comida.
+- **Semana de activación (TEMPORAL)**: jueves 01/10 y viernes 02/10/2026 no siguen el split; se hace la rutina
+  "Activación" de `RUTINA_ESPECIAL` (cuerpo completo liviano, checklist sin series). Los datos reales arrancan el
+  lunes 05/10/2026. Después del 02/10 hay que borrar `RUTINA_ESPECIAL` y sus usos (marcados `// TEMPORAL`).
 
 ## Flujo de trabajo típico
 
@@ -65,8 +72,14 @@ Se usa sobre todo desde el celular, instalada como PWA.
 
 ## Datos (`supabase/schema.sql`)
 
-- `dias`: PK (user_id, fecha). agua (ml), banos jsonb `[{h, t}]` con t = Bristol 1-7, peso, cintura,
+- `dias`: PK (user_id, fecha). agua (ml), agua_log jsonb, banos jsonb `[{h, t}]` con t = Bristol 1-7, peso, cintura,
   hombro (0-10), nota, comidas jsonb `{desayuno: true, …}`.
+- `agua_log` (`supabase/002_agua_log.sql`): una entrada por toma, `[{ml, fuente, h: "HH:MM", auto?}]`.
+  `agua` sigue existiendo y **siempre es la suma de `agua_log`**: `guardarDia` la recalcula sola, nunca la escribas suelta.
+  Fuentes: "Agua", "Mate" y el `nombre` del `liquido` de cada comida.
+- Líquidos automáticos: una comida de `COMIDAS` con `liquido: {ml, nombre}` agrega al tildarla una toma con
+  `auto: "<id de la comida>"` (sin duplicar) y la saca al destildarla. Las automáticas no se borran con la ×.
+  El −250 descuenta de la última toma manual. El informe muestra el agua desglosada por fuente.
 - `sesiones`: una fila por ejercicio por día, único (user_id, fecha, ejercicio). sets jsonb `[{kg, reps}]`.
 - RLS activado: cada usuario solo lee y escribe sus filas. Cualquier tabla nueva necesita RLS y políticas igual.
 - Lectura y guardado: `lib/useGymData.ts` (upsert optimista; el agua se agrupa con un debounce de 700 ms).
@@ -96,11 +109,14 @@ Se usa sobre todo desde el celular, instalada como PWA.
 
 ## Pantallas
 
-- **Hoy** (`Hoy.tsx`): semana, "hoy toca", y hábitos que se guardan solos (agua, comidas, Bristol, hombro, peso, cintura, nota).
+- **Hoy** (`Hoy.tsx`): semana, "hoy toca", y hábitos que se guardan solos (agua por toma, comidas, Bristol, hombro, peso,
+  cintura los viernes, nota).
   Tocar un día de la semana permite registrar fechas pasadas. El avatar abre el Informe.
 - **Entreno** (`Entreno.tsx`): modo foco, un ejercicio por vez. La serie viene precargada (`lib/entreno.ts`: la anterior,
   o la última sesión + suba si llegó al tope) y se registra con un toque; cada serie se guarda al instante y arranca el descanso.
   La sesión en curso vive en `localStorage` y muestra una píldora sobre la barra desde las otras pestañas.
+  Si la fecha está en `RUTINA_ESPECIAL`, Hoy, Semana y Entreno usan esa rutina en vez del split: columna gris en la semana,
+  checklist en Entreno (guardada en `localStorage`, no en Supabase, para no ensuciar el historial ni el informe).
 - **Progreso** (`Progreso.tsx`): peso, cintura, cargas, hombro y constancia como tendencias. De acá sale el Informe.
 - **Plan** (`Plan.tsx`): comidas, rutina y compras, todo leído de `lib/plan.ts`.
 - **Informe** (`Informe.tsx`): hoja que sube desde abajo, con el texto para copiar y cerrar sesión.

@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { addDays, hoyISO, lunesDe } from "@/lib/fechas";
-import { PLAN, POR_DIA } from "@/lib/plan";
+import { PLAN, POR_DIA, RUTINA_ESPECIAL } from "@/lib/plan";
 import { seriesDe } from "@/lib/entreno";
 import type { Sesion } from "@/lib/types";
 
@@ -58,6 +58,18 @@ export default function Semana({ fecha, sesiones, onElegir }: Props) {
           const k = POR_DIA[(i + 1) % 7];
           const elegido = f === fecha;
           const futuro = f > hoy;
+          // TEMPORAL: borrar después del 02/10/2026. Día especial: columna gris, no cuenta para la semana.
+          const esp = RUTINA_ESPECIAL[f];
+          if (esp) {
+            return (
+              <button key={f} disabled={futuro} onClick={() => onElegir(f)} aria-pressed={elegido} aria-label={`${l}, ${esp.n}`}>
+                <span className={`col especial ${elegido ? "elegido" : ""}`}>
+                  <span>{esp.corto}</span>
+                </span>
+                <span className={`letra ${elegido ? "elegido" : ""}`}>{l}</span>
+              </button>
+            );
+          }
           if (!k) {
             return (
               <button key={f} disabled={futuro} onClick={() => onElegir(f)} aria-label={`${l}, descanso`} aria-pressed={elegido}>

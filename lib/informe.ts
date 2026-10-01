@@ -70,10 +70,18 @@ export function generarInforme(dias: Record<string, Dia>, sesiones: Record<strin
     }`,
   );
   const aguas = rango.map((f) => dia(f)?.agua ?? 0).filter((x) => x > 0);
+  // desglose por fuente: "agua 1,5 L · mate 1 L · leche del desayuno 0,3 L"
+  const porFuente = new Map<string, number>();
+  rango.forEach((f) => (dia(f)?.agua_log ?? []).forEach((t) => {
+    const k = t.fuente.toLowerCase();
+    porFuente.set(k, (porFuente.get(k) ?? 0) + t.ml);
+  }));
+  const desglose = [...porFuente].sort((a, b) => b[1] - a[1]).map(([k, ml]) => `${k} ${fmt(ml / 1000, 2)} L`).join(" · ");
   L.push(
     `AGUA: ${
       aguas.length
-        ? `promedio ${fmt(aguas.reduce((a, b) => a + b, 0) / aguas.length / 1000, 2)} L/día en ${aguas.length} días (meta ${fmt(AGUA_META / 1000)} L)`
+        ? `promedio ${fmt(aguas.reduce((a, b) => a + b, 0) / aguas.length / 1000, 2)} L/día en ${aguas.length} días (meta ${fmt(AGUA_META / 1000)} L)` +
+          (desglose ? `\n  por fuente, total del período: ${desglose}` : "")
         : "sin datos"
     }`,
   );

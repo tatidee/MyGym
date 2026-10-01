@@ -4,7 +4,7 @@ import { useState } from "react";
 import { avanceDe } from "./Semana";
 import { addDays, ddmm, fmt, hoyISO, lunesDe, parseISO } from "@/lib/fechas";
 import { tocoTope } from "@/lib/informe";
-import { ALTURA_CM, CINTURA_META, ORDEN, PLAN, POR_DIA } from "@/lib/plan";
+import { ALTURA_CM, CINTURA_META, ORDEN, PLAN, POR_DIA, RUTINA_ESPECIAL } from "@/lib/plan";
 import { subaKg } from "@/lib/entreno";
 import type { Dia, Ejercicio, Sesion } from "@/lib/types";
 import { sesionesDe, type GymData } from "@/lib/useGymData";
@@ -125,7 +125,7 @@ function Cintura({ dias }: { dias: Dia[] }) {
           </div>
         </>
       ) : (
-        <p className="vacio" style={{ paddingBottom: 0 }}>Medila una vez por semana, el mismo día, en ayunas y a la altura del ombligo.</p>
+        <p className="vacio" style={{ paddingBottom: 0 }}>Se mide los viernes, en ayunas y a la altura del ombligo.</p>
       )}
     </section>
   );
@@ -219,7 +219,7 @@ function Constancia({ data, hoy }: { data: GymData; hoy: string }) {
     if (f === hoy) return "hoy";
     if (f > hoy) return "";
     const av = avanceDe(data.sesiones, f);
-    if (POR_DIA[parseISO(f).getDay()]) {
+    if (POR_DIA[parseISO(f).getDay()] && !RUTINA_ESPECIAL[f]) {
       previstos++;
       if (av >= 1) hechos++;
     }

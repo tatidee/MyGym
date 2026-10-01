@@ -395,6 +395,15 @@ button:disabled {
   background: var(--accbg);
   color: var(--acc);
 }
+.col.especial {
+  background: transparent;
+  color: var(--ink3);
+  box-shadow: inset 0 0 0 1.5px var(--ink3);
+}
+.col.especial.elegido {
+  box-shadow: inset 0 0 0 2px var(--acc);
+  color: var(--acc);
+}
 .col.descanso.elegido {
   background: var(--acc);
   box-shadow: none;
@@ -469,9 +478,40 @@ button:disabled {
 }
 .agua-btns {
   display: grid;
-  grid-template-columns: 56px 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 14px;
+}
+.agua-btns .mate {
+  grid-column: span 2;
+}
+.tomas {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.tomas li {
+  display: grid;
+  grid-template-columns: 48px 64px 1fr 44px;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.tomas .ml {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.tomas .auto .f {
+  color: var(--ink2);
+}
+.tomas button {
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  color: var(--ink2);
+  border-radius: 12px;
 }
 .agua-btns button {
   height: var(--tap);
@@ -687,6 +727,10 @@ button:disabled {
   color: var(--warn);
   font-size: 14px;
   line-height: 1.4;
+}
+.aviso.ok {
+  background: var(--okbg);
+  color: var(--ok);
 }
 .aviso.acc {
   background: var(--accbg);
@@ -1619,6 +1663,7 @@ button:disabled {
   .bristol button:hover:not([aria-pressed="true"]),
   .escala button:hover:not(.on),
   .agua-btns .mas2:hover,
+  .tomas button:hover,
   .dias-elegir button:hover:not([aria-pressed="true"]),
   .semana-nav button:hover:not(:disabled) {
     background: var(--line);

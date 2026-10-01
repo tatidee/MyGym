@@ -71,8 +71,8 @@ export default function GymApp() {
     window.scrollTo({ top: 0 });
   };
 
-  const empezar = (k: DiaKey) => {
-    setDia(k);
+  const empezar = (k?: DiaKey) => {
+    if (k) setDia(k);
     ir("entreno");
   };
 
